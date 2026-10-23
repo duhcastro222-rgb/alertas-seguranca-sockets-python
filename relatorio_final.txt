@@ -1,0 +1,11 @@
+RELATORIO FINAL DA SESSAO DE MONITORAMENTO
+Inicio: 23/08/2026 22:35:38
+Fim: 23/08/2026 22:35:47
+Cliente conectado: 127.0.0.1:49706
+Total de alertas: 4
+
+Alertas recebidos:
+1. Tentativa de login invalido do IP 192.168.0.10
+2. Portscan detectado no IP 10.0.0.5
+3. Acesso negado ao servidor de arquivos (usuario root)
+4. Malware bloqueado na estacao WS-014

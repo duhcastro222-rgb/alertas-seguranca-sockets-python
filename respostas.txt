@@ -1,0 +1,52 @@
+ATIVIDADE DE SOCKETS - PERGUNTAS DE DISCUSSAO
+=============================================
+
+1) Por que o servidor trava esperando recv() mesmo depois que ja recebeu uma
+   mensagem?
+
+Porque o socket, por padrao, funciona em modo bloqueante. Quando o programa
+chega no recv(), ele para ali e so continua quando algum dado chega no buffer
+da conexao. Depois de tratar o primeiro alerta, o while volta para o recv() e
+o servidor fica parado de novo, esperando o proximo pacote do cliente. Ou
+seja, o servidor nao "travou" com defeito: ele esta aguardando, que e o
+comportamento normal de um socket bloqueante. Enquanto ele espera, nao
+consegue fazer mais nada (nem atender outro cliente).
+
+
+2) O que aconteceria se o cliente nunca enviasse "FIM"?
+
+O servidor ficaria preso no recv() para sempre, sem gerar o relatorio final,
+porque o loop so termina quando chega "FIM". Existem tres saidas possiveis:
+
+- Se o cliente fechar a conexao, o recv() devolve uma sequencia vazia (b"") e
+  o codigo trata isso com o "if not dados: break" e sai do loop.
+- Se o processo do cliente travar sem fechar nada, o servidor fica esperando
+  indefinidamente e seria necessario encerrar no Ctrl+C (tratado no except
+  KeyboardInterrupt).
+- A forma correta de resolver isso na pratica e usar um tempo limite, por
+  exemplo conexao.settimeout(30), fazendo o recv() levantar socket.timeout
+  depois de 30 segundos sem receber nada.
+
+Em qualquer um dos casos, como o relatorio e gerado dentro do bloco finally,
+ele acaba sendo criado do mesmo jeito.
+
+
+3) Por que faz sentido usar UDP para heartbeats de sensores e TCP para
+   alertas de seguranca?
+
+Heartbeat e uma mensagem pequena, repetitiva e que perde valor rapido: o
+sensor manda "estou vivo" a cada poucos segundos. Se um pacote se perder, o
+proximo chega logo em seguida e resolve. Como o UDP nao abre conexao, nao
+confirma entrega e nao retransmite, ele gasta menos rede e menos processamento
+e serve bem para dezenas ou centenas de sensores mandando sinal o tempo todo.
+O sendto() dispara o pacote e segue a vida.
+
+O alerta de seguranca e o contrario: cada mensagem e unica e importante. Um
+"portscan detectado" perdido pode significar um incidente que ninguem vai
+investigar. O TCP garante que a mensagem chega, que chega inteira e na ordem
+certa, alem de avisar quando a conexao cai. Esse custo a mais de confirmacao e
+retransmissao vale a pena quando a informacao nao pode ser perdida.
+
+Resumindo: UDP para dados frequentes e descartaveis (monitoramento de
+presenca), TCP para dados criticos que precisam de garantia de entrega
+(registro de incidentes).
